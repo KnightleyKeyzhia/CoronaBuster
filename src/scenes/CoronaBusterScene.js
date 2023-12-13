@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import FallingObject from "../ui/FallingObject";
 export default class CoronaBusterScene extends Phaser.Scene {
     constructor(){
         super('corona-buster-scene')
@@ -11,6 +12,17 @@ export default class CoronaBusterScene extends Phaser.Scene {
         this.nav_left = false;
         this.nav_right = false;
         this.shoot = false;
+
+        //inisialisasi tombol keyboard
+        this.cursor = undefined
+
+        //inisiasi player
+        this.player = undefined;
+        this.speed = 100
+
+        //inisiasi enemy
+        this.enemies = undefined
+        this.enemySpeed = 50;
     }
 
     preload(){
@@ -20,6 +32,14 @@ export default class CoronaBusterScene extends Phaser.Scene {
         this.load.image('left-btn', 'images/left-btn.png')
         this.load.image('right-btn', 'images/right-btn.png')
         this.load.image('shoot', 'images/shoot-btn.png')
+
+        //upload player
+        this.load.spritesheet('player', 'images/ship.png', {
+            frameWidth: 66, frameHeight: 66,
+        })
+
+        //upload enemy
+        this.load.image('enemy', 'images/enemy.png')    
     }
 
     create(){
@@ -40,6 +60,25 @@ export default class CoronaBusterScene extends Phaser.Scene {
 
         //display control button
         this.createButton()
+
+        //untuk control player dengan keyboard button
+        this.cursor = this.input.keyboard.createCursorKeys()
+
+        //display player
+        this.player = this.createPlayer()
+
+        //display enemy
+        this.enemies = this.physics.add.group({
+            classType: FallingObject,
+            maxSize: 10,
+            runChildUpdate: true
+        })
+        this.time.addEvent({
+        delay: Phaser.Math.Between(1000, 5000),
+        callback: this.spawnEnemy,
+        callbackScope: this,
+        loop: true
+        })
     }
 
     update(time){
@@ -51,6 +90,9 @@ export default class CoronaBusterScene extends Phaser.Scene {
             }
         
         })
+
+        //Panggil method peswat button
+        this.movePlayer(this.player, time)
     }
 
     createButton(){
@@ -96,5 +138,65 @@ export default class CoronaBusterScene extends Phaser.Scene {
         shoot.on('pointerout', () => {
             this.shoot = false
         }, this)
+    }
+    
+    createPlayer(){
+        const player = this.physics.add.sprite(200, 450, 'player')
+        player.setCollideWorldBounds(true)
+        
+        //adjust animation and frame for player
+        this.anims.create({
+            key: 'turn',
+            frames: [{
+                key: 'player',
+                frame: 0
+            }]
+        })
+
+        this.anims.create({
+            key: 'left',
+            frames: this.anims.generateFrameNames('player', {
+                start: 1,
+                end: 2
+            }),
+        })
+
+        this.anims.create({
+            key: 'right',
+            frames: this.anims.generateFrameNames('player', {
+                start: 1,
+                end: 2
+            }),
+        })
+
+        return player
+    }
+    
+    // 3. METOD UNTUK menegedalikan player
+    movePlayer(player, time){
+        if(this.cursor.left.isDown || this.nav_left) {
+            this.player.setVelocityX(this.speed * -1)
+            this.player.anims.play('left', true)
+            this.player.setFlipX(false)
+        } else if  (this.cursor.right.isDown || this.nav_right){
+            this.player.setVelocityX(this.speed)
+            this.player.anims.play('right', true)
+        } else {
+            this.player.setVelocityX(0)
+            this.player.anims.play('turn')
+        }
+    }
+
+    spawnEnemy(){
+        const config = {
+            speed: 30,
+            rotation: 0.1
+        }
+        //@ts-ignore
+        const enemy = this.enemies.get(0,0,'enemy', config)
+        const positionX = Phaser.Math.Between(50, 350)
+        if (enemy){
+            enemy.spawn(positionX)
+        }
     }
 }
