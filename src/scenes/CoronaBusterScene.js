@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import FallingObject from "../ui/FallingObject";
+// import Laser from "../ui/Laser";
 export default class CoronaBusterScene extends Phaser.Scene {
     constructor(){
         super('corona-buster-scene')
@@ -13,16 +14,20 @@ export default class CoronaBusterScene extends Phaser.Scene {
         this.nav_right = false;
         this.shoot = false;
 
-        //inisialisasi tombol keyboard
+        // inisialisasi tombol keyboard
         this.cursor = undefined
 
         //inisiasi player
         this.player = undefined;
         this.speed = 100
 
-        //inisiasi enemy
-        this.enemies = undefined
+        // //inisiasi enemy
+        this.enemies = undefined;
         this.enemySpeed = 50;
+
+        // //inisiasi Laser
+        // this.lasers = undefined;
+        // this.lastFired = 10;
     }
 
     preload(){
@@ -38,8 +43,14 @@ export default class CoronaBusterScene extends Phaser.Scene {
             frameWidth: 66, frameHeight: 66,
         })
 
-        //upload enemy
-        this.load.image('enemy', 'images/enemy.png')    
+        // //upload enemy
+        this.load.image('enemy', 'images/enemy.png');
+        
+        //upload laser
+        // this.load.spritesheet('laser', 'images/laser-bolts.png', {
+        //     frameWidth: 16,
+        //     frameHeight: 16,
+        // })
     }
 
     create(){
@@ -47,13 +58,13 @@ export default class CoronaBusterScene extends Phaser.Scene {
         const gameHeight = this.scale.height*0.5;
         this.add.image (gameWidth, gameHeight, "background")
     
-    //display cloud
-    this.clouds = this.physics.add.group({
-        key: 'cloud',
-        repeat: 10,
-    })
+        //display cloud
+        this.clouds = this.physics.add.group({
+            key: 'cloud',
+            repeat: 10,
+        })
     
-    Phaser.Actions.RandomRectangle(
+        Phaser.Actions.RandomRectangle(
             this.clouds.getChildren(),
             this.physics.world.bounds
         )
@@ -74,15 +85,46 @@ export default class CoronaBusterScene extends Phaser.Scene {
             runChildUpdate: true
         })
         this.time.addEvent({
-        delay: Phaser.Math.Between(1000, 5000),
-        callback: this.spawnEnemy,
-        callbackScope: this,
-        loop: true
+            delay: Phaser.Math.Between(1000, 5000),
+            callback: this.spawnEnemy,
+            callbackScope: this,
+            loop: true
         })
+
+        //display enemy
+        // this.enemies = this.physics.add.group({
+        //     classType: FallingObject,
+        //     maxSize: 10,
+        //     runChildUpdate: true
+        // })
+        // this.time.addEvent({
+        //     delay: Phaser.Math.Between(1000, 5000),
+        //     callback: this.spawnEnemy,
+        //     callbackScope: this,
+        //     loop: true
+        // })
+
+        //display laser 
+        // this.lasers = this.physics.add.group({
+        //     classType: Laser,
+        //     maxSize: 10,
+        //     runChildUpdate: true
+        // })
+
+        // this.physics.add.overlap(
+        //     this.lasers,
+        //     this.enemies,
+        //     this.hitEnemy,
+        //     null,
+        //     this
+        // )
+
     }
+
 
     update(time){
         this.clouds.children.iterate((child) => {
+            // @ts-ignore
             child.setVelocityY(20)
             if(child.y > this.scale.height){
                 child.x = Phaser.Math.Between(10, 400)
@@ -91,10 +133,12 @@ export default class CoronaBusterScene extends Phaser.Scene {
         
         })
 
-        //Panggil method peswat button
+        // //Panggil method peswat button
         this.movePlayer(this.player, time)
     }
 
+    // METHOD TAMBAHAN
+    // 1. METHOD UNTUK MEMBUAT TOMBOL NAVIGASI
     createButton(){
         this.input.addPointer(3)
 
@@ -139,7 +183,8 @@ export default class CoronaBusterScene extends Phaser.Scene {
             this.shoot = false
         }, this)
     }
-    
+
+    // 2. METHOD UNTUK MEMBUAT PLAYER
     createPlayer(){
         const player = this.physics.add.sprite(200, 450, 'player')
         player.setCollideWorldBounds(true)
@@ -172,7 +217,7 @@ export default class CoronaBusterScene extends Phaser.Scene {
         return player
     }
     
-    // 3. METOD UNTUK menegedalikan player
+    // 3. METOD UNTUK mengendalikan player
     movePlayer(player, time){
         if(this.cursor.left.isDown || this.nav_left) {
             this.player.setVelocityX(this.speed * -1)
@@ -181,22 +226,52 @@ export default class CoronaBusterScene extends Phaser.Scene {
         } else if  (this.cursor.right.isDown || this.nav_right){
             this.player.setVelocityX(this.speed)
             this.player.anims.play('right', true)
+            this.player.setFlipX(true)
         } else {
             this.player.setVelocityX(0)
             this.player.anims.play('turn')
         }
+    
+        //kondisi menembak
+        if((this.shoot) && time> this.lastFired) {
+            const laser = this.lasers.get(0, 0, 'laser')
+            if (laser) {
+                laser.fire(this.player.x, this.player.y)
+                this.lastFired = time + 150
+            }
+        }
     }
 
+    // 4. METHOD UNTUK MENAMPILKAN ENEMY
     spawnEnemy(){
         const config = {
             speed: 30,
             rotation: 0.1
         }
-        //@ts-ignore
-        const enemy = this.enemies.get(0,0,'enemy', config)
+
+        const enemy = this.enemies.get(0, 0, 'enemy', config)
         const positionX = Phaser.Math.Between(50, 350)
-        if (enemy){
+        if(enemy) {
             enemy.spawn(positionX)
         }
     }
+
+    // spawnEnemy(){
+    //     const config = {
+    //         speed: 30,
+    //         rotation: 0.1
+    //     }
+    //     //@ts-ignore
+    //     const enemy = this.enemies.get(0,0,'enemy', config)
+    //     const positionX = Phaser.Math.Between(50, 350)
+    //     if (enemy){
+    //         enemy.spawn(positionX)
+    //     }
+    // }
+
+    //method ketika player menabrak enemy
+    // hitEnemy(Laser, enemy){
+    //     Laser.die()
+    //     enemy.die()
+    // }
 }

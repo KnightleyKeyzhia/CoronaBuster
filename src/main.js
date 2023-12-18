@@ -1,5 +1,6 @@
 import Phaser from 'phaser'
 
+// import CoronaBusterScene from './scenes/CoronaBusterScene'
 import CoronaBusterScene from './scenes/CoronaBusterScene'
 
 const config = {
