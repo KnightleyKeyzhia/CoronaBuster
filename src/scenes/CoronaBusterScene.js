@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import FallingObject from "../ui/FallingObject";
-// import Laser from "../ui/Laser";
+import Laser from "../ui/Laser";
 export default class CoronaBusterScene extends Phaser.Scene {
     constructor(){
         super('corona-buster-scene')
@@ -25,9 +25,9 @@ export default class CoronaBusterScene extends Phaser.Scene {
         this.enemies = undefined;
         this.enemySpeed = 50;
 
-        // //inisiasi Laser
-        // this.lasers = undefined;
-        // this.lastFired = 10;
+        //inisiasi Laser
+        this.lasers = undefined;
+        this.lastFired = 10;
     }
 
     preload(){
@@ -47,10 +47,10 @@ export default class CoronaBusterScene extends Phaser.Scene {
         this.load.image('enemy', 'images/enemy.png');
         
         //upload laser
-        // this.load.spritesheet('laser', 'images/laser-bolts.png', {
-        //     frameWidth: 16,
-        //     frameHeight: 16,
-        // })
+        this.load.spritesheet('laser', 'images/laser-bolts.png', {
+            frameWidth: 16,
+            frameHeight: 16,
+        })
     }
 
     create(){
@@ -91,33 +91,21 @@ export default class CoronaBusterScene extends Phaser.Scene {
             loop: true
         })
 
-        //display enemy
-        // this.enemies = this.physics.add.group({
-        //     classType: FallingObject,
-        //     maxSize: 10,
-        //     runChildUpdate: true
-        // })
-        // this.time.addEvent({
-        //     delay: Phaser.Math.Between(1000, 5000),
-        //     callback: this.spawnEnemy,
-        //     callbackScope: this,
-        //     loop: true
-        // })
-
         //display laser 
-        // this.lasers = this.physics.add.group({
-        //     classType: Laser,
-        //     maxSize: 10,
-        //     runChildUpdate: true
-        // })
+        this.lasers = this.physics.add.group({
+            classType: Laser,
+            maxSize: 10,
+            runChildUpdate: true
+        })
 
-        // this.physics.add.overlap(
-        //     this.lasers,
-        //     this.enemies,
-        //     this.hitEnemy,
-        //     null,
-        //     this
-        // )
+        //ketika laser besentuhan dengan laser
+            this.physics.add.overlap(
+            this.lasers,
+            this.enemies,
+            this.hitEnemy,
+            null,
+            this
+        )
 
     }
 
@@ -256,22 +244,9 @@ export default class CoronaBusterScene extends Phaser.Scene {
         }
     }
 
-    // spawnEnemy(){
-    //     const config = {
-    //         speed: 30,
-    //         rotation: 0.1
-    //     }
-    //     //@ts-ignore
-    //     const enemy = this.enemies.get(0,0,'enemy', config)
-    //     const positionX = Phaser.Math.Between(50, 350)
-    //     if (enemy){
-    //         enemy.spawn(positionX)
-    //     }
-    // }
-
     //method ketika player menabrak enemy
-    // hitEnemy(Laser, enemy){
-    //     Laser.die()
-    //     enemy.die()
-    // }
+    hitEnemy(Laser, enemy){
+        Laser.die()
+        enemy.die()
+    }
 }
